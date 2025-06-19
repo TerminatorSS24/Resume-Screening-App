@@ -46,8 +46,8 @@ Resume-Screening-App/
 
 
 
-## 📦 Installation
-# 🧰 Prerequisites
+# 📦 Installation
+## 🧰 Prerequisites
 Python 3.7+
 
 pip (Python package manager)
@@ -56,21 +56,21 @@ pip (Python package manager)
 bash
 Copy
 Edit
-# Step 1: Clone the repository
+## Step 1: Clone the repository
 git clone https://github.com/TerminatorSS24/Resume-Screening-App.git
 cd Resume-Screening-App
 
-# Step 2: (Optional) Create a virtual environment
+## Step 2: (Optional) Create a virtual environment
 python -m venv venv
-# On Windows:
+## On Windows:
 venv\Scripts\activate
-# On macOS/Linux:
+## On macOS/Linux:
 source venv/bin/activate
 
-# Step 3: Install dependencies
+## Step 3: Install dependencies
 pip install -r requirements.txt
 
-# Step 4: Run the Streamlit app
+## Step 4: Run the Streamlit app
 streamlit run app.py
 🧪 Model Training
 If you want to retrain the model with your own data:
@@ -78,7 +78,7 @@ If you want to retrain the model with your own data:
 bash
 Copy
 Edit
-# Run the training script
+## Run the training script
 python train_model.py
 Make sure your dataset is in the format:
 
