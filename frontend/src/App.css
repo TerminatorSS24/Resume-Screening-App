@@ -1,0 +1,33 @@
+.app {
+  max-width: 700px;
+  margin: auto;
+  padding: 2rem;
+  font-family: 'Segoe UI', sans-serif;
+}
+
+textarea {
+  width: 100%;
+  font-size: 1rem;
+  padding: 1rem;
+  border-radius: 8px;
+  border: 1px solid #ccc;
+}
+
+button {
+  background-color: #667eea;
+  color: white;
+  padding: 10px 20px;
+  border: none;
+  margin-top: 1rem;
+  font-size: 1rem;
+  border-radius: 5px;
+  cursor: pointer;
+}
+
+.result {
+  margin-top: 2rem;
+  background: #f5f7fa;
+  padding: 1rem;
+  border-radius: 8px;
+  border: 1px solid #eee;
+}
