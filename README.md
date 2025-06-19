@@ -57,8 +57,8 @@ bash
 Copy
 Edit
 ## Step 1: Clone the repository
-git clone https://github.com/TerminatorSS24/Resume-Screening-App.git
-cd Resume-Screening-App
+`git clone https://github.com/TerminatorSS24/Resume-Screening-App.git`
+`cd Resume-Screening-App`
 
 ## Step 2: (Optional) Create a virtual environment
 python -m venv venv
