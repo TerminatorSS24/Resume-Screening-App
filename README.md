@@ -46,8 +46,8 @@ Resume-Screening-App/
 
 
 
-📦 Installation
-🧰 Prerequisites
+##📦 Installation
+#🧰 Prerequisites
 Python 3.7+
 
 pip (Python package manager)
