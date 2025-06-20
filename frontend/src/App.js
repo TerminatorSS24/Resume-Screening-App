@@ -4,7 +4,9 @@ import "./App.css";
 
 function App() {
   const [file, setFile] = useState(null);
+  const [jobDesc, setJobDesc] = useState("");
   const [prediction, setPrediction] = useState(null);
+  const [atsScore, setAtsScore] = useState(null);
   const [loading, setLoading] = useState(false);
 
   const handleUpload = async (e) => {
@@ -13,6 +15,7 @@ function App() {
 
     const formData = new FormData();
     formData.append("resume", file);
+    formData.append("job_description", jobDesc);
 
     setLoading(true);
     try {
@@ -22,8 +25,13 @@ function App() {
         },
       });
       setPrediction(res.data.category);
+      if (res.data.ats_score !== null) {
+        setAtsScore(res.data.ats_score);
+      } else {
+        setAtsScore(null);
+      }
     } catch (err) {
-      alert("Error: " + err.response?.data?.error || err.message);
+      alert("Error: " + (err.response?.data?.error || err.message));
     } finally {
       setLoading(false);
     }
@@ -38,13 +46,24 @@ function App() {
           accept=".pdf,.docx,.txt"
           onChange={(e) => setFile(e.target.files[0])}
         />
+        <textarea
+          placeholder="📄 Paste the job description here (optional)"
+          value={jobDesc}
+          onChange={(e) => setJobDesc(e.target.value)}
+        />
         <button type="submit">Submit Resume</button>
       </form>
       {loading && <p>🔄 Analyzing your resume...</p>}
       {prediction && (
         <div className="result">
-          <h3>Predicted Category:</h3>
+          <h3>🗂️ Predicted Category:</h3>
           <p>{prediction}</p>
+        </div>
+      )}
+      {atsScore !== null && (
+        <div className="result">
+          <h3>🔍 ATS Match Score:</h3>
+          <p>{atsScore}%</p>
         </div>
       )}
     </div>

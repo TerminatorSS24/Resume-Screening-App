@@ -86,22 +86,92 @@
 # if __name__ == "__main__":
 #     main()
 
+#################################################################
+
+# from flask import Flask, request, jsonify
+# from flask_cors import CORS
+# import pickle
+# import re
+# import os
+# import fitz  # PyMuPDF for PDFs
+# import docx  # python-docx
+
+# app = Flask(__name__)
+# CORS(app)
+
+# # Load model components
+# clf = pickle.load(open("clf.pkl", "rb"))
+# tfidf = pickle.load(open("tfidf.pkl", "rb"))
+# le = pickle.load(open("label_encoder.pkl", "rb"))
+
+# def clean_resume(text):
+#     text = re.sub(r"http\S+\s", " ", text)
+#     text = re.sub(r"RT|cc", " ", text)
+#     text = re.sub(r"#\S+\s", " ", text)
+#     text = re.sub(r"@\S+", " ", text)
+#     text = re.sub(r"[^\x00-\x7f]", " ", text)
+#     text = re.sub("[%s]" % re.escape("""!"#$%&'()*+,-./:;<=>?@[\]^_`{|}~"""), " ", text)
+#     text = re.sub(r"\s+", " ", text)
+#     return text
+
+# def extract_text(file_storage):
+#     filename = file_storage.filename
+#     if filename.endswith(".pdf"):
+#         doc = fitz.open(stream=file_storage.read(), filetype="pdf")
+#         text = ""
+#         for page in doc:
+#             text += page.get_text()
+#         return text
+#     elif filename.endswith(".docx"):
+#         doc = docx.Document(file_storage)
+#         return "\n".join([para.text for para in doc.paragraphs])
+#     elif filename.endswith(".txt"):
+#         return file_storage.read().decode("utf-8")
+#     else:
+#         return ""
+
+# @app.route('/predict', methods=['POST'])
+# def predict():
+#     file = request.files.get("resume")
+#     if file is None:
+#         return jsonify({"error": "No file uploaded"}), 400
+
+#     raw_text = extract_text(file)
+#     cleaned = clean_resume(raw_text)
+#     vector = tfidf.transform([cleaned])
+#     pred_id = clf.predict(vector)[0]
+#     label = le.inverse_transform([pred_id])[0]
+#     return jsonify({"category": label})
+
+# if __name__ == '__main__':
+#     app.run(debug=True)
+
+
+
+#############################################################
+
 from flask import Flask, request, jsonify
 from flask_cors import CORS
 import pickle
 import re
-import os
 import fitz  # PyMuPDF for PDFs
 import docx  # python-docx
+from sentence_transformers import SentenceTransformer, util
+from sklearn.feature_extraction.text import TfidfVectorizer
 
+# Initialize Flask app
 app = Flask(__name__)
 CORS(app)
 
-# Load model components
+# Load your pretrained models
 clf = pickle.load(open("clf.pkl", "rb"))
 tfidf = pickle.load(open("tfidf.pkl", "rb"))
 le = pickle.load(open("label_encoder.pkl", "rb"))
 
+# Load sentence transformer model for ATS score
+ats_model = SentenceTransformer('all-MiniLM-L6-v2')
+
+# === Helper: Resume Cleaner ===
 def clean_resume(text):
     text = re.sub(r"http\S+\s", " ", text)
     text = re.sub(r"RT|cc", " ", text)
@@ -110,10 +180,11 @@ def clean_resume(text):
     text = re.sub(r"[^\x00-\x7f]", " ", text)
     text = re.sub("[%s]" % re.escape("""!"#$%&'()*+,-./:;<=>?@[\]^_`{|}~"""), " ", text)
     text = re.sub(r"\s+", " ", text)
-    return text
+    return text.strip()
 
+# === Helper: Extract Text from Uploaded File ===
 def extract_text(file_storage):
-    filename = file_storage.filename
+    filename = file_storage.filename.lower()
     if filename.endswith(".pdf"):
         doc = fitz.open(stream=file_storage.read(), filetype="pdf")
         text = ""
@@ -124,22 +195,41 @@ def extract_text(file_storage):
         doc = docx.Document(file_storage)
         return "\n".join([para.text for para in doc.paragraphs])
     elif filename.endswith(".txt"):
-        return file_storage.read().decode("utf-8")
+        return file_storage.read().decode("utf-8", errors="ignore")
     else:
         return ""
 
+# === API Route ===
 @app.route('/predict', methods=['POST'])
 def predict():
     file = request.files.get("resume")
+    job_desc = request.form.get("job_description", "")
+
     if file is None:
         return jsonify({"error": "No file uploaded"}), 400
 
+    # Extract and clean resume text
     raw_text = extract_text(file)
-    cleaned = clean_resume(raw_text)
-    vector = tfidf.transform([cleaned])
-    pred_id = clf.predict(vector)[0]
-    label = le.inverse_transform([pred_id])[0]
-    return jsonify({"category": label})
+    cleaned_resume = clean_resume(raw_text)
 
+    # Predict resume category
+    vector = tfidf.transform([cleaned_resume])
+    pred_id = clf.predict(vector)[0]
+    category = le.inverse_transform([pred_id])[0]
+
+    # Compute ATS Score (if job description is provided)
+    ats_score = None
+    if job_desc.strip():
+        resume_embed = ats_model.encode(cleaned_resume, convert_to_tensor=True)
+        jd_embed = ats_model.encode(job_desc, convert_to_tensor=True)
+        similarity = util.cos_sim(resume_embed, jd_embed)[0][0]
+        ats_score = round(float(similarity) * 100, 2)
+
+    return jsonify({
+        "category": category,
+        "ats_score": ats_score
+    })
+
+# === Start Server ===
 if __name__ == '__main__':
     app.run(debug=True)
